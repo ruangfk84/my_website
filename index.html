@@ -1,101 +1,95 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Kamera Sederhana</title>
-  <style>
-    body {
-      font-family: Arial;
-      text-align: center;
-      background: #f0f2f5;
-      padding: 20px;
-    }
+<meta charset="UTF-8">
+<title>Scan QR NISN</title>
 
-    .frame {
-      width: 320px;
-      height: 240px;
-      border: 4px solid #2196f3;
-      border-radius: 12px;
-      margin: 20px auto;
-      overflow: hidden;
-      background: black;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+<!-- library QR -->
+<script src="https://unpkg.com/html5-qrcode"></script>
 
-    video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+<style>
+  body{
+    font-family: Arial;
+    text-align:center;
+    background:#f2f4f7;
+  }
 
-    button {
-      padding: 10px 20px;
-      margin: 5px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-  </style>
+  .frame{
+    width:320px;
+    margin:20px auto;
+    border:4px solid #2196f3;
+    border-radius:12px;
+    padding:10px;
+    background:white;
+  }
+
+  button{
+    padding:10px 18px;
+    margin:5px;
+    font-size:16px;
+    cursor:pointer;
+  }
+</style>
 </head>
 <body>
 
-<h2>Kontrol Kamera</h2>
+<h2>Scan QR NISN</h2>
 
 <div class="frame">
-  <video id="camera" autoplay playsinline></video>
+  <div id="reader" style="width:300px;"></div>
 </div>
 
-<button onclick="startCamera()">Buka Kamera</button>
-<button onclick="stopCamera()">Tutup Kamera</button>
+<button onclick="startScan()">Buka Kamera</button>
+<button onclick="stopScan()">Tutup Kamera</button>
+
+<p id="hasil">Hasil: -</p>
 
 <script>
-let stream = null;
-const video = document.getElementById("camera");
+let html5QrCode;
+let data = null; // ← variabel NISN siswa
 
-// 🔗 GANTI DENGAN URL WEB APP ANDA
-const API_URL = "https://script.google.com/macros/s/AKfycbw03mYVMbghuTqBzIJsHONZWZPpBVq-m6sGluKKoxJnKvA0CubvVR3iv3DkvoqUlK15/exec";
+// =======================
+// START SCAN
+// =======================
+function startScan() {
+  html5QrCode = new Html5Qrcode("reader");
 
-// =========================
-// BUKA KAMERA
-// =========================
-async function startCamera() {
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: false
-    });
+  html5QrCode.start(
+    { facingMode: "environment" },
+    {
+      fps: 10,
+      qrbox: 250
+    },
+    (decodedText) => {
+      // ✅ QR terbaca
+      data = decodedText; // ← NISN masuk ke variabel
+      document.getElementById("hasil").innerText =
+        "Hasil: " + data;
 
-    video.srcObject = stream;
-    sendStatus("kamera dibuka");
+      console.log("NISN:", data);
 
-  } catch (err) {
+      // optional: stop setelah scan
+      stopScan();
+
+      // 👉 nanti bisa kirim ke Apps Script
+      // kirimNISN(data);
+    },
+    (error) => {
+      // abaikan error scan
+    }
+  ).catch(err => {
     alert("Tidak bisa membuka kamera: " + err);
-  }
+  });
 }
 
-// =========================
-// TUTUP KAMERA
-// =========================
-function stopCamera() {
-  if (stream) {
-    stream.getTracks().forEach(track => track.stop());
-    video.srcObject = null;
-    sendStatus("kamera ditutup");
-  }
-}
-
-// =========================
-// KIRIM KE APPS SCRIPT
-// =========================
-async function sendStatus(status) {
-  try {
-    await fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify({ status }),
-    });
-  } catch (e) {
-    console.log("Gagal kirim:", e);
+// =======================
+// STOP SCAN
+// =======================
+function stopScan() {
+  if (html5QrCode) {
+    html5QrCode.stop().then(() => {
+      html5QrCode.clear();
+    }).catch(() => {});
   }
 }
 </script>
