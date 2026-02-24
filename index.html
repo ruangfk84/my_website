@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Kamera Sederhana</title>
+  <style>
+    body {
+      font-family: Arial;
+      text-align: center;
+      background: #f0f2f5;
+      padding: 20px;
+    }
+
+    .frame {
+      width: 320px;
+      height: 240px;
+      border: 4px solid #2196f3;
+      border-radius: 12px;
+      margin: 20px auto;
+      overflow: hidden;
+      background: black;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Kontrol Kamera</h2>
+
+<div class="frame">
+  <video id="camera" autoplay playsinline></video>
+</div>
+
+<button onclick="startCamera()">Buka Kamera</button>
+<button onclick="stopCamera()">Tutup Kamera</button>
+
+<script>
+let stream = null;
+const video = document.getElementById("camera");
+
+// 🔗 GANTI DENGAN URL WEB APP ANDA
+const API_URL = "https://script.google.com/macros/s/AKfycbw03mYVMbghuTqBzIJsHONZWZPpBVq-m6sGluKKoxJnKvA0CubvVR3iv3DkvoqUlK15/exec";
+
+// =========================
+// BUKA KAMERA
+// =========================
+async function startCamera() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: false
+    });
+
+    video.srcObject = stream;
+    sendStatus("kamera dibuka");
+
+  } catch (err) {
+    alert("Tidak bisa membuka kamera: " + err);
+  }
+}
+
+// =========================
+// TUTUP KAMERA
+// =========================
+function stopCamera() {
+  if (stream) {
+    stream.getTracks().forEach(track => track.stop());
+    video.srcObject = null;
+    sendStatus("kamera ditutup");
+  }
+}
+
+// =========================
+// KIRIM KE APPS SCRIPT
+// =========================
+async function sendStatus(status) {
+  try {
+    await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({ status }),
+    });
+  } catch (e) {
+    console.log("Gagal kirim:", e);
+  }
+}
+</script>
+
+</body>
+</html>
